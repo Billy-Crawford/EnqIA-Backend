@@ -37,5 +37,10 @@ class User(db.Model):
         lazy=True
     )
 
-
+    answers = db.relationship(
+        "Answer",
+        backref="user",
+        lazy=True,
+        cascade="all, delete"
+    )
 

@@ -31,4 +31,11 @@ class Question(db.Model):
         nullable=True
     )
 
+    answers = db.relationship(
+        "Answer",
+        backref="question",
+        lazy=True,
+        cascade="all, delete"
+    )
+
 
