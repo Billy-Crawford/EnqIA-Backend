@@ -6,6 +6,7 @@ from app.extensions.db import db
 from app.extensions.migrate import migrate
 from app.extensions.jwt import jwt
 from app.routes.auth import auth_bp
+from app.routes.surveys import surveys_bp
 from app.routes.users import users_bp
 
 
@@ -24,6 +25,7 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(surveys_bp)
 
     register_commands(app)
 

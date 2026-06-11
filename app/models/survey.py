@@ -1,0 +1,38 @@
+from datetime import datetime
+
+from app.extensions.db import db
+
+
+class Survey(db.Model):
+    __tablename__ = "surveys"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    title = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    description = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+    )
+
+    archived_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    researcher_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False
+    )

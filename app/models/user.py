@@ -30,3 +30,12 @@ class User(db.Model):
         db.String(50),
         nullable=False
     )
+
+    surveys = db.relationship(
+        "Survey",
+        backref="researcher",
+        lazy=True
+    )
+
+
+
