@@ -36,3 +36,11 @@ class Survey(db.Model):
         db.ForeignKey("users.id"),
         nullable=False
     )
+
+    questions = db.relationship(
+        "Question",
+        backref="survey",
+        lazy=True,
+        cascade="all, delete"
+    )
+
