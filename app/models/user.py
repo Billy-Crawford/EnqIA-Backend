@@ -44,3 +44,14 @@ class User(db.Model):
         cascade="all, delete"
     )
 
+    gender = db.Column(
+        db.String(20),
+        nullable=True
+    )
+
+    age = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    

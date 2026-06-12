@@ -57,6 +57,8 @@ def get_user(user_id):
 def create_user():
 
     data = request.get_json()
+    gender = data.get("gender")
+    age = data.get("age")
 
     existing_user = User.query.filter_by(
         email=data.get("email")
@@ -68,13 +70,13 @@ def create_user():
         }), 400
 
     user = User(
-        firstname=data.get("firstname"),
-        lastname=data.get("lastname"),
-        email=data.get("email"),
-        password=generate_password_hash(
-            data.get("password")
-        ),
-        role=data.get("role")
+        firstname=data["firstname"],
+        lastname=data["lastname"],
+        email=data["email"],
+        password=generate_password_hash(data["password"]),
+        role=data["role"],
+        gender=gender,
+        age=age
     )
 
     db.session.add(user)
@@ -140,5 +142,4 @@ def delete_user(user_id):
     return jsonify({
         "message": "User deleted successfully"
     }), 200
-
 

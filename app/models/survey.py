@@ -31,6 +31,11 @@ class Survey(db.Model):
         nullable=True
     )
 
+    is_published = db.Column(
+        db.Boolean,
+        default=False
+    )
+
     researcher_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),

@@ -1,8 +1,10 @@
+from datetime import datetime
+
 from flask import Blueprint, jsonify, request
 
 from flask_jwt_extended import (
     jwt_required,
-    get_jwt_identity
+    get_jwt_identity, get_jwt
 )
 
 from app.extensions.db import db
@@ -39,17 +41,51 @@ def create_survey():
 @jwt_required()
 def get_surveys():
 
-    surveys = Survey.query.all()
+    claims = get_jwt()
+
+    role = claims.get("role")
+
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    # Admin voit tout
+
+    if role == "admin":
+
+        surveys = Survey.query.all()
+
+    # Chercheur voit ses enquêtes
+
+    elif role == "researcher":
+
+        surveys = Survey.query.filter_by(
+            researcher_id=user_id
+        ).all()
+
+    # Répondant voit seulement les enquêtes publiées
+    # et non archivées
+
+    else:
+
+        surveys = Survey.query.filter(
+            Survey.is_published == True,
+            Survey.archived_at.is_(None)
+        ).all()
 
     result = []
 
     for survey in surveys:
 
         result.append({
+
             "id": survey.id,
             "title": survey.title,
             "description": survey.description,
-            "researcher_id": survey.researcher_id
+            "researcher_id": survey.researcher_id,
+            "is_published": survey.is_published,
+            "archived_at": survey.archived_at
+
         })
 
     return jsonify(result), 200
@@ -132,6 +168,168 @@ def delete_survey(survey_id):
     return jsonify({
         "message": "Survey deleted successfully"
     }), 200
+
+
+@surveys_bp.route(
+    "/<int:survey_id>/publish",
+    methods=["POST"]
+)
+@jwt_required()
+def publish_survey(survey_id):
+
+    survey = Survey.query.get(
+        survey_id
+    )
+
+    if not survey:
+
+        return jsonify({
+            "message": "Survey not found"
+        }),404
+
+    claims = get_jwt()
+
+    role = claims.get("role")
+
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    if role == "researcher":
+
+        if survey.researcher_id != user_id:
+
+            return jsonify({
+                "message":
+                "You can only publish your own surveys"
+            }),403
+
+    survey.is_published = True
+
+    db.session.commit()
+
+    return jsonify({
+        "message":
+        "Survey published successfully"
+    }),200
+
+@surveys_bp.route(
+    "/<int:survey_id>/unpublish",
+    methods=["POST"]
+)
+@jwt_required()
+def unpublish_survey(survey_id):
+
+    survey = Survey.query.get(
+        survey_id
+    )
+
+    if not survey:
+
+        return jsonify({
+            "message":
+            "Survey not found"
+        }),404
+
+    claims = get_jwt()
+
+    role = claims.get("role")
+
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    if role == "researcher":
+
+        if survey.researcher_id != user_id:
+
+            return jsonify({
+                "message":
+                "You can only unpublish your own surveys"
+            }),403
+
+    survey.is_published = False
+
+    db.session.commit()
+
+    return jsonify({
+        "message":
+        "Survey unpublished successfully"
+    }),200
+
+
+@surveys_bp.route(
+    "/<int:survey_id>/archive",
+    methods=["PATCH"]
+)
+@researcher_required()
+def archive_survey(survey_id):
+
+    survey = Survey.query.get(
+        survey_id
+    )
+
+    if not survey:
+        return jsonify({
+            "message": "Survey not found"
+        }),404
+
+    researcher_id = int(
+        get_jwt_identity()
+    )
+
+    if survey.researcher_id != researcher_id:
+
+        return jsonify({
+            "message":
+            "You can only archive your own survey"
+        }),403
+
+    survey.archived_at = datetime.utcnow()
+
+    db.session.commit()
+
+    return jsonify({
+        "message":
+        "Survey archived successfully"
+    }),200
+
+
+@surveys_bp.route(
+    "/<int:survey_id>/unarchive",
+    methods=["PATCH"]
+)
+@researcher_required()
+def unarchive_survey(survey_id):
+
+    survey = Survey.query.get(
+        survey_id
+    )
+
+    if not survey:
+        return jsonify({
+            "message": "Survey not found"
+        }),404
+
+    researcher_id = int(
+        get_jwt_identity()
+    )
+
+    if survey.researcher_id != researcher_id:
+
+        return jsonify({
+            "message":
+            "You can only unarchive your own survey"
+        }),403
+
+    survey.archived_at = None
+
+    db.session.commit()
+
+    return jsonify({
+        "message":
+        "Survey unarchived successfully"
+    }),200
 
 
 

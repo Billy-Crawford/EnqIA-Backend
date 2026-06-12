@@ -5,11 +5,14 @@ from app.config.settings import Config
 from app.extensions.db import db
 from app.extensions.migrate import migrate
 from app.extensions.jwt import jwt
+from app.routes import statistics
 from app.routes.answers import answers_bp
 from app.routes.auth import auth_bp
 from app.routes.questions import questions_bp
+from app.routes.statistics import statistics_bp
 from app.routes.surveys import surveys_bp
 from app.routes.users import users_bp
+from app.routes.dashboard import dashboard_bp
 
 
 def create_app():
@@ -30,6 +33,8 @@ def create_app():
     app.register_blueprint(surveys_bp)
     app.register_blueprint(questions_bp)
     app.register_blueprint(answers_bp)
+    app.register_blueprint(statistics_bp)
+    app.register_blueprint(dashboard_bp)
 
     register_commands(app)
 

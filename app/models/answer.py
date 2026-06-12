@@ -46,3 +46,4 @@ class Answer(db.Model):
         cascade="all, delete"
     )
 
+

@@ -34,6 +34,17 @@ def submit_answers(survey_id):
             "message": "Survey not found"
         }),404
 
+    if survey.archived_at:
+        return jsonify({
+            "message":
+                "Survey is archived"
+        }), 400
+
+    if not survey.is_published:
+        return jsonify({
+            "message":
+                "Survey is not published"
+        }), 400
 
     user_id = int(get_jwt_identity())
 
@@ -67,15 +78,11 @@ def submit_answers(survey_id):
             "message": "No answers provided"
         }),400
 
-
-
     for item in answers_data:
-
 
         question = Question.query.get(
             item.get("question_id")
         )
-
 
         if not question:
 
@@ -84,10 +91,7 @@ def submit_answers(survey_id):
             }),404
 
 
-
         value = item.get("value")
-
-
 
         # Validation Likert
 
@@ -100,8 +104,6 @@ def submit_answers(survey_id):
                     "Likert value must be between 1 and 5"
                 }),400
 
-
-
         # Validation choix unique
 
         if question.type == "single_choice":
@@ -112,7 +114,6 @@ def submit_answers(survey_id):
                     "message":
                     "Invalid option"
                 }),400
-
 
 
         # Validation choix multiple
@@ -144,8 +145,6 @@ def submit_answers(survey_id):
 
         db.session.flush()
 
-
-
         # Stockage des choix multiples
 
         if question.type == "multiple_choice":
@@ -159,10 +158,7 @@ def submit_answers(survey_id):
 
                 db.session.add(answer_option)
 
-
-
     db.session.commit()
-
 
     return jsonify({
         "message":
@@ -188,8 +184,6 @@ def get_survey_answers(survey_id):
             "message": "Survey not found"
         }), 404
 
-
-
     # Vérifier que le chercheur possède cette enquête
 
     if survey.researcher_id != researcher_id:
@@ -198,18 +192,13 @@ def get_survey_answers(survey_id):
             "message": "You cannot access this survey"
         }),403
 
-
-
     answers = Answer.query.join(
         Question
     ).filter(
         Question.survey_id == survey_id
     ).all()
 
-
-
     result = []
-
 
     for answer in answers:
 
@@ -239,14 +228,11 @@ def get_my_answers():
 
     user_id = int(get_jwt_identity())
 
-
     answers = Answer.query.filter_by(
         user_id=user_id
     ).all()
 
-
     result = []
-
 
     for answer in answers:
 
