@@ -8,8 +8,17 @@ from flask_jwt_extended import (
 )
 
 from app.extensions.db import db
+from app.models.answer import Answer
 from app.models.survey import Survey
 from app.decorators.roles import researcher_required
+
+from flask import send_file
+from io import BytesIO
+
+from app.services.export_service import (
+    generate_csv_export,
+    generate_excel_export
+)
 
 surveys_bp = Blueprint(
     "surveys",
@@ -101,11 +110,25 @@ def get_survey(survey_id):
             "message": "Survey not found"
         }), 404
 
+    questions = []
+
+    for question in survey.questions:
+
+        questions.append({
+            "id": question.id,
+            "title": question.title,
+            "type": question.type,
+            "options": question.options
+        })
+
     return jsonify({
         "id": survey.id,
         "title": survey.title,
         "description": survey.description,
-        "researcher_id": survey.researcher_id
+        "researcher_id": survey.researcher_id,
+        "is_published": survey.is_published,
+        "archived_at": survey.archived_at,
+        "questions": questions
     }), 200
 
 @surveys_bp.route("/<int:survey_id>", methods=["PUT"])
@@ -330,6 +353,156 @@ def unarchive_survey(survey_id):
         "message":
         "Survey unarchived successfully"
     }),200
+
+
+@surveys_bp.route(
+    "/<int:survey_id>/export/csv",
+    methods=["GET"]
+)
+@jwt_required()
+def export_csv(survey_id):
+
+    survey = Survey.query.get(
+        survey_id
+    )
+
+    if not survey:
+
+        return jsonify({
+            "message":
+            "Survey not found"
+        }),404
+
+    claims = get_jwt()
+
+    role = claims.get("role")
+
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    if role == "researcher":
+
+        if survey.researcher_id != user_id:
+
+            return jsonify({
+                "message":
+                "Unauthorized"
+            }),403
+
+    csv_file = generate_csv_export(
+        survey_id
+    )
+
+    return send_file(
+        BytesIO(
+            csv_file.getvalue().encode("utf-8")
+        ),
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name=f"survey_{survey_id}.csv"
+    )
+
+
+@surveys_bp.route(
+    "/<int:survey_id>/export/excel",
+    methods=["GET"]
+)
+@jwt_required()
+def export_excel(survey_id):
+
+    survey = Survey.query.get(
+        survey_id
+    )
+
+    if not survey:
+
+        return jsonify({
+            "message":
+            "Survey not found"
+        }),404
+
+    claims = get_jwt()
+
+    role = claims.get("role")
+
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    if role == "researcher":
+
+        if survey.researcher_id != user_id:
+
+            return jsonify({
+                "message":
+                "Unauthorized"
+            }),403
+
+    excel_file = generate_excel_export(
+        survey_id
+    )
+
+    return send_file(
+        excel_file,
+        as_attachment=True,
+        download_name=f"survey_{survey_id}.xlsx",
+        mimetype=(
+            "application/"
+            "vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        )
+    )
+
+
+@surveys_bp.route(
+    "/my-participations",
+    methods=["GET"]
+)
+@jwt_required()
+def my_participations():
+
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    answers = Answer.query.filter_by(
+        user_id=user_id
+    ).all()
+
+    survey_ids = set()
+
+    result = []
+
+    for answer in answers:
+
+        survey_id = (
+            answer.question.survey_id
+        )
+
+        if survey_id in survey_ids:
+            continue
+
+        survey_ids.add(
+            survey_id
+        )
+
+        survey = Survey.query.get(
+            survey_id
+        )
+
+        result.append({
+
+            "survey_id": survey.id,
+
+            "title": survey.title,
+
+            "answered_at":
+                answer.created_at
+
+        })
+
+    return jsonify(result), 200
 
 
 
