@@ -6,6 +6,6 @@ main_bp = Blueprint('main', __name__)
 def home():
     return jsonify({
         "project": "EnqIA",
-        "message": "API is running successfully"
+        "message": "API is running successfully | C'EST TOUJOURS BIEN FAIT"
     })
 

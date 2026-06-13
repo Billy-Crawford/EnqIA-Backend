@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from werkzeug.security import generate_password_hash
+from flasgger import swag_from
 
 from app.decorators.roles import admin_required
 from app.extensions.db import db
@@ -13,6 +14,15 @@ users_bp = Blueprint(
 
 
 @users_bp.route("/", methods=["GET"])
+@swag_from({
+    "tags": ["Users"],
+    "summary": "List all users",
+    "responses": {
+        200: {
+            "description": "Users retrieved successfully"
+        }
+    }
+})
 @admin_required()
 def get_users():
 
@@ -33,6 +43,26 @@ def get_users():
 
 
 @users_bp.route("/<int:user_id>", methods=["GET"])
+@swag_from({
+    "tags": ["Users"],
+    "summary": "Get user by id",
+    "parameters": [
+        {
+            "name": "user_id",
+            "in": "path",
+            "type": "integer",
+            "required": True
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "User retrieved successfully"
+        },
+        404: {
+            "description": "User not found"
+        }
+    }
+})
 @admin_required()
 def get_user(user_id):
 
@@ -53,10 +83,56 @@ def get_user(user_id):
 
 
 @users_bp.route("/", methods=["POST"])
+@swag_from({
+    "tags": ["Users"],
+    "summary": "Create a new user",
+    "parameters": [
+        {
+            "name": "body",
+            "in": "body",
+            "required": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "firstname": {
+                        "type": "string"
+                    },
+                    "lastname": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "gender": {
+                        "type": "string"
+                    },
+                    "age": {
+                        "type": "integer"
+                    }
+                }
+            }
+        }
+    ],
+    "responses": {
+        201: {
+            "description": "User created successfully"
+        },
+        400: {
+            "description": "Email already exists"
+        }
+    }
+})
 @admin_required()
 def create_user():
 
     data = request.get_json()
+
     gender = data.get("gender")
     age = data.get("age")
 
@@ -73,7 +149,9 @@ def create_user():
         firstname=data["firstname"],
         lastname=data["lastname"],
         email=data["email"],
-        password=generate_password_hash(data["password"]),
+        password=generate_password_hash(
+            data["password"]
+        ),
         role=data["role"],
         gender=gender,
         age=age
@@ -86,7 +164,50 @@ def create_user():
         "message": "User created successfully"
     }), 201
 
+
 @users_bp.route("/<int:user_id>", methods=["PUT"])
+@swag_from({
+    "tags": ["Users"],
+    "summary": "Update a user",
+    "parameters": [
+        {
+            "name": "user_id",
+            "in": "path",
+            "type": "integer",
+            "required": True
+        },
+        {
+            "name": "body",
+            "in": "body",
+            "required": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "firstname": {
+                        "type": "string"
+                    },
+                    "lastname": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "User updated successfully"
+        },
+        404: {
+            "description": "User not found"
+        }
+    }
+})
 @admin_required()
 def update_user(user_id):
 
@@ -125,7 +246,28 @@ def update_user(user_id):
         "message": "User updated successfully"
     }), 200
 
+
 @users_bp.route("/<int:user_id>", methods=["DELETE"])
+@swag_from({
+    "tags": ["Users"],
+    "summary": "Delete a user",
+    "parameters": [
+        {
+            "name": "user_id",
+            "in": "path",
+            "type": "integer",
+            "required": True
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "User deleted successfully"
+        },
+        404: {
+            "description": "User not found"
+        }
+    }
+})
 @admin_required()
 def delete_user(user_id):
 
@@ -142,4 +284,3 @@ def delete_user(user_id):
     return jsonify({
         "message": "User deleted successfully"
     }), 200
-
