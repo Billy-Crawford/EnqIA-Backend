@@ -16,6 +16,7 @@ from app.decorators.roles import researcher_required
 from flask import send_file
 from io import BytesIO
 
+from app.services.event_logger import log_event
 from app.services.export_service import (
     generate_csv_export,
     generate_excel_export
@@ -41,14 +42,23 @@ def create_survey():
 
     data = request.get_json()
 
+    researcher_id = int(
+        get_jwt_identity()
+    )
+
     survey = Survey(
         title=data.get("title"),
         description=data.get("description"),
-        researcher_id=int(get_jwt_identity())
+        researcher_id=researcher_id
     )
 
     db.session.add(survey)
     db.session.commit()
+
+    log_event(
+        researcher_id,
+        f"created survey {survey.id}"
+    )
 
     return jsonify({
         "message": "Survey created successfully",
@@ -265,10 +275,15 @@ def publish_survey(survey_id):
 
     db.session.commit()
 
+    log_event(
+        user_id,
+        f"published survey {survey.id}"
+    )
+
     return jsonify({
         "message":
-        "Survey published successfully"
-    }),200
+            "Survey published successfully"
+    }), 200
 
 @surveys_bp.route(
     "/<int:survey_id>/unpublish",
@@ -354,10 +369,15 @@ def archive_survey(survey_id):
 
     db.session.commit()
 
+    log_event(
+        researcher_id,
+        f"archived survey {survey.id}"
+    )
+
     return jsonify({
         "message":
-        "Survey archived successfully"
-    }),200
+            "Survey archived successfully"
+    }), 200
 
 
 @surveys_bp.route(
@@ -436,6 +456,11 @@ def export_csv(survey_id):
         survey_id
     )
 
+    log_event(
+        user_id,
+        f"exported csv survey {survey.id}"
+    )
+
     return send_file(
         BytesIO(
             csv_file.getvalue().encode("utf-8")
@@ -483,6 +508,11 @@ def export_excel(survey_id):
 
     excel_file = generate_excel_export(
         survey_id
+    )
+
+    log_event(
+        user_id,
+        f"exported excel survey {survey.id}"
     )
 
     return send_file(

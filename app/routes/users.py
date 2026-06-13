@@ -4,6 +4,7 @@ from flasgger import swag_from
 
 from app.decorators.roles import admin_required
 from app.extensions.db import db
+from app.models.event_log import EventLog
 from app.models.user import User
 
 users_bp = Blueprint(
@@ -284,3 +285,36 @@ def delete_user(user_id):
     return jsonify({
         "message": "User deleted successfully"
     }), 200
+
+
+@users_bp.route("/logs", methods=["GET"])
+@swag_from({
+    "tags": ["Users"],
+    "summary": "Get audit logs",
+    "responses": {
+        200: {
+            "description": "Logs retrieved successfully"
+        }
+    }
+})
+@admin_required()
+def get_logs():
+
+    logs = EventLog.query.order_by(
+        EventLog.created_at.desc()
+    ).all()
+
+    result = []
+
+    for log in logs:
+
+        result.append({
+            "id": log.id,
+            "user_id": log.user_id,
+            "action": log.action,
+            "created_at": log.created_at
+        })
+
+    return jsonify(result), 200
+
+

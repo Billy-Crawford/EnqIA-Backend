@@ -3,6 +3,7 @@ from marshmallow import ValidationError
 from werkzeug.security import generate_password_hash
 
 from app.extensions.db import db
+from app.models import User
 from app.models.user import User
 from werkzeug.security import check_password_hash
 
@@ -21,6 +22,8 @@ from app.decorators.roles import (
 from app.schemas import UserRegisterSchema
 
 from flasgger import swag_from
+
+from app.services.event_logger import log_event
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 register_schema = UserRegisterSchema()
@@ -132,6 +135,11 @@ def login():
 
     refresh_token = create_refresh_token(
         identity=str(user.id),
+    )
+
+    log_event(
+        user.id,
+        "login"
     )
 
     return jsonify({
