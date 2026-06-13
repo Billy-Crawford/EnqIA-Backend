@@ -12,6 +12,9 @@ from app.models.answer import Answer
 from app.models.answer_option import AnswerOption
 from app.models.question import Question
 from app.models.survey import Survey
+from app.utils.rate_limit import (
+    can_submit_response
+)
 
 from app.decorators.roles import respondent_required, researcher_required
 
@@ -33,10 +36,7 @@ answers_bp = Blueprint(
     "/survey/<int:survey_id>",
     methods=["POST"]
 )
-@answers_bp.route(
-    "/survey/<int:survey_id>",
-    methods=["POST"]
-)
+
 @respondent_required()
 def submit_answers(survey_id):
 
@@ -77,6 +77,12 @@ def submit_answers(survey_id):
         return jsonify({
             "message": "You already answered this survey"
         }), 400
+
+    if not can_submit_response(user_id):
+        return jsonify({
+            "message":
+                "Too many responses. Try again later."
+        }), 429
 
 
     data = request.get_json()
