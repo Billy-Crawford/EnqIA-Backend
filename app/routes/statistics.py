@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, jsonify, request
 
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
@@ -12,7 +13,14 @@ statistics_bp = Blueprint(
     url_prefix="/surveys"
 )
 
-
+@swag_from({
+    "tags": ["Statistics"],
+    "responses": {
+        200: {
+            "description": "Survey statistics"
+        }
+    }
+})
 @statistics_bp.route(
     "/<int:survey_id>/statistics",
     methods=["GET"]
@@ -21,9 +29,7 @@ statistics_bp = Blueprint(
 def survey_statistics(survey_id):
 
     claims = get_jwt()
-
     role = claims.get("role")
-
     gender = request.args.get("gender")
     age_group = request.args.get("age_group")
     date = request.args.get("date")
@@ -37,7 +43,6 @@ def survey_statistics(survey_id):
             "message":
             "Access denied"
         }),403
-
 
 
     survey = Survey.query.get(
@@ -71,13 +76,10 @@ def survey_statistics(survey_id):
         date=date
     )
 
-
     return jsonify({
 
         "survey_id": survey.id,
-
         "title": survey.title,
-
         "statistics": data
 
     }),200

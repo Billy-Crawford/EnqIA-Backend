@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from flasgger import swag_from
 from flask import Blueprint, jsonify, request
 
 from flask_jwt_extended import (
@@ -27,6 +28,14 @@ surveys_bp = Blueprint(
 )
 
 @surveys_bp.route("/", methods=["POST"])
+@swag_from({
+    "tags": ["Surveys"],
+    "responses": {
+        201: {
+            "description": "Survey created"
+        }
+    }
+})
 @researcher_required()
 def create_survey():
 
@@ -47,6 +56,14 @@ def create_survey():
     }), 201
 
 @surveys_bp.route("/", methods=["GET"])
+@swag_from({
+    "tags": ["Surveys"],
+    "responses": {
+        200: {
+            "description": "List surveys"
+        }
+    }
+})
 @jwt_required()
 def get_surveys():
 
@@ -100,6 +117,14 @@ def get_surveys():
     return jsonify(result), 200
 
 @surveys_bp.route("/<int:survey_id>", methods=["GET"])
+@swag_from({
+    "tags": ["Surveys"],
+    "responses": {
+        200: {
+            "description": "Survey details"
+        }
+    }
+})
 @jwt_required()
 def get_survey(survey_id):
 
@@ -197,6 +222,15 @@ def delete_survey(survey_id):
     "/<int:survey_id>/publish",
     methods=["POST"]
 )
+
+@swag_from({
+    "tags": ["Surveys"],
+    "responses": {
+        200: {
+            "description": "Survey published"
+        }
+    }
+})
 @jwt_required()
 def publish_survey(survey_id):
 
@@ -281,6 +315,14 @@ def unpublish_survey(survey_id):
     }),200
 
 
+@swag_from({
+    "tags": ["Surveys"],
+    "responses": {
+        200: {
+            "description": "Survey archived"
+        }
+    }
+})
 @surveys_bp.route(
     "/<int:survey_id>/archive",
     methods=["PATCH"]

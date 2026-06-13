@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request
+from flasgger import swag_from
 
-from flask_jwt_extended import get_jwt_identity
-from sqlalchemy.ext.asyncio import result
-from sqlalchemy.sql.functions import current_user
+from flask_jwt_extended import (
+    get_jwt_identity
+)
 
 from app.extensions.db import db
 from app.models.question import Question
@@ -17,7 +18,16 @@ questions_bp = Blueprint(
     url_prefix="/questions"
 )
 
+
 @questions_bp.route("/survey/<int:survey_id>", methods=["POST"])
+@swag_from({
+    "tags": ["Questions"],
+    "responses": {
+        201: {
+            "description": "Question created successfully"
+        }
+    }
+})
 @researcher_required()
 def create_question(survey_id):
 
@@ -28,7 +38,9 @@ def create_question(survey_id):
             "message": "Survey not found"
         }), 404
 
-    current_user_id = int(get_jwt_identity())
+    current_user_id = int(
+        get_jwt_identity()
+    )
 
     if survey.researcher_id != current_user_id:
         return jsonify({
@@ -39,7 +51,7 @@ def create_question(survey_id):
 
     question_type = data.get("type")
 
-    allowed_types =[
+    allowed_types = [
         "single_choice",
         "multiple_choice",
         "likert",
@@ -66,7 +78,16 @@ def create_question(survey_id):
         "question_id": question.id
     }), 201
 
-@questions_bp.route("/survey/<int:survey_id>/", methods=["GET"])
+
+@questions_bp.route("/survey/<int:survey_id>", methods=["GET"])
+@swag_from({
+    "tags": ["Questions"],
+    "responses": {
+        200: {
+            "description": "List survey questions"
+        }
+    }
+})
 def get_question(survey_id):
 
     survey = Survey.query.get(survey_id)
@@ -93,11 +114,22 @@ def get_question(survey_id):
 
     return jsonify(result), 200
 
-@questions_bp.route("/<int:question_id>/", methods=["PUT"])
+
+@questions_bp.route("/<int:question_id>", methods=["PUT"])
+@swag_from({
+    "tags": ["Questions"],
+    "responses": {
+        200: {
+            "description": "Question updated successfully"
+        }
+    }
+})
 @researcher_required()
 def update_question(question_id):
 
-    question = Question.query.get(question_id)
+    question = Question.query.get(
+        question_id
+    )
 
     if not question:
         return jsonify({
@@ -137,46 +169,47 @@ def update_question(question_id):
     db.session.commit()
 
     return jsonify({
-        "message": "Question updated successfully",
-    })
+        "message": "Question updated successfully"
+    }), 200
 
 
 @questions_bp.route("/<int:question_id>", methods=["DELETE"])
+@swag_from({
+    "tags": ["Questions"],
+    "responses": {
+        200: {
+            "description": "Question deleted successfully"
+        }
+    }
+})
 @researcher_required()
 def delete_question(question_id):
 
-    question = Question.query.get(question_id)
-
+    question = Question.query.get(
+        question_id
+    )
 
     if not question:
         return jsonify({
             "message": "Question not found"
-        }),404
-
+        }), 404
 
     survey = Survey.query.get(
         question.survey_id
     )
 
-
     current_user_id = int(
         get_jwt_identity()
     )
 
-
     if survey.researcher_id != current_user_id:
         return jsonify({
             "message": "Unauthorized"
-        }),403
-
+        }), 403
 
     db.session.delete(question)
     db.session.commit()
 
-
     return jsonify({
         "message": "Question deleted successfully"
-    })
-
-
-
+    }), 200

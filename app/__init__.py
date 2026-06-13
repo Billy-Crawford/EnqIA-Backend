@@ -13,12 +13,14 @@ from app.routes.statistics import statistics_bp
 from app.routes.surveys import surveys_bp
 from app.routes.users import users_bp
 from app.routes.dashboard import dashboard_bp
+from flasgger import Swagger
 
 
 def create_app():
     app = Flask(__name__)
 
     app.config.from_object(Config)
+    Swagger(app)
 
     db.init_app(app)
     migrate.init_app(app, db)

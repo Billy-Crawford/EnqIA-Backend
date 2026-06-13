@@ -20,10 +20,21 @@ from app.decorators.roles import (
 
 from app.schemas import UserRegisterSchema
 
+from flasgger import swag_from
+
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 register_schema = UserRegisterSchema()
 
 @auth_bp.route("/register", methods=["POST"])
+@swag_from({
+    "tags": ["Authentication"],
+    "responses": {
+        201: {
+            "description": "User created"
+        }
+    }
+})
+
 def register():
 
     try:
@@ -63,6 +74,35 @@ def register():
 
 
 @auth_bp.route("/login", methods=["POST"])
+@swag_from({
+    "tags": ["Authentication"],
+    "parameters": [
+        {
+            "name": "body",
+            "in": "body",
+            "required": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "Login successful"
+        },
+        401: {
+            "description": "Invalid credentials"
+        }
+    }
+})
 def login():
 
     data = request.get_json()

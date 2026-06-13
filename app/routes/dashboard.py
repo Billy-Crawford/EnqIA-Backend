@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, jsonify
 
 from flask_jwt_extended import (
@@ -21,7 +22,14 @@ dashboard_bp = Blueprint(
     __name__,
     url_prefix="/dashboard"
 )
-
+@swag_from({
+    "tags": ["Dashboard"],
+    "responses": {
+        200: {
+            "description": "Researcher dashboard"
+        }
+    }
+})
 @dashboard_bp.route(
     "/researcher",
     methods=["GET"]
@@ -85,6 +93,16 @@ def researcher_dashboard():
 
     }),200
 
+
+
+@swag_from({
+    "tags": ["Dashboard"],
+    "responses": {
+        200: {
+            "description": "Admin dashboard"
+        }
+    }
+})
 @dashboard_bp.route(
     "/admin",
     methods=["GET"]
@@ -115,19 +133,14 @@ def admin_dashboard():
     return jsonify({
 
         "users": users_count,
-
         "researchers": researchers_count,
-
         "respondents": respondents_count,
-
         "surveys": surveys_count,
-
         "published_surveys": published_surveys_count,
-
         "questions": questions_count,
-
         "responses": answers_count
 
     }),200
+
 
 

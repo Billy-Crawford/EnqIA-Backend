@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, jsonify, request
 
 from flask_jwt_extended import (
@@ -20,6 +21,18 @@ answers_bp = Blueprint(
     url_prefix="/answers"
 )
 
+@swag_from({
+    "tags": ["Answers"],
+    "responses": {
+        201: {
+            "description": "Answers submitted"
+        }
+    }
+})
+@answers_bp.route(
+    "/survey/<int:survey_id>",
+    methods=["POST"]
+)
 @answers_bp.route(
     "/survey/<int:survey_id>",
     methods=["POST"]
@@ -165,6 +178,15 @@ def submit_answers(survey_id):
         "Answers submitted successfully"
     }),201
 
+
+@swag_from({
+    "tags": ["Answers"],
+    "responses": {
+        201: {
+            "description": "Answers submitted"
+        }
+    }
+})
 @answers_bp.route(
     "/survey/<int:survey_id>",
     methods=["GET"]
@@ -175,9 +197,7 @@ def get_survey_answers(survey_id):
 
     researcher_id = int(get_jwt_identity())
 
-
     survey = Survey.query.get(survey_id)
-
 
     if not survey:
         return jsonify({
@@ -205,24 +225,28 @@ def get_survey_answers(survey_id):
         result.append({
 
             "answer_id": answer.id,
-
             "question_id": answer.question_id,
-
             "respondent_id": answer.user_id,
-
             "value": answer.value,
-
             "created_at": answer.created_at
 
         })
 
-
     return jsonify(result),200
 
+@swag_from({
+    "tags": ["Answers"],
+    "responses": {
+        200: {
+            "description": "My answers"
+        }
+    }
+})
 @answers_bp.route(
     "/my",
     methods=["GET"]
 )
+
 @jwt_required()
 def get_my_answers():
 
