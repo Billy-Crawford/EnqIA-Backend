@@ -11,7 +11,7 @@ def can_submit_response(user_id):
 
     count = Answer.query.filter(
         Answer.user_id == user_id,
-        Answer.created >= one_hour_ago
+        Answer.created_at >= one_hour_ago
     ).count()
 
     return count < 5
