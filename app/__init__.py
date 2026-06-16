@@ -14,6 +14,7 @@ from app.routes.surveys import surveys_bp
 from app.routes.users import users_bp
 from app.routes.dashboard import dashboard_bp
 from flasgger import Swagger
+from flask_cors import CORS
 
 
 def create_app():
@@ -21,6 +22,17 @@ def create_app():
 
     app.config.from_object(Config)
     Swagger(app)
+
+    CORS(
+        app,
+        supports_credentials=True,
+        origins=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://192.168.1.68:3000",
+        ],
+        allow_headers=["Content-Type", "Authorization"],
+    )
 
     db.init_app(app)
     migrate.init_app(app, db)
