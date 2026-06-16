@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 
 from flask_jwt_extended import (
     jwt_required,
-    get_jwt_identity
+    get_jwt_identity, get_jwt
 )
 
 from app.extensions.db import db
@@ -198,10 +198,12 @@ def submit_answers(survey_id):
     methods=["GET"]
 )
 @jwt_required()
-@researcher_required()
+# @researcher_required()
 def get_survey_answers(survey_id):
+    claims = get_jwt()
+    role = claims.get("role")
 
-    researcher_id = int(get_jwt_identity())
+    user_id = int(get_jwt_identity())
 
     survey = Survey.query.get(survey_id)
 
@@ -210,13 +212,21 @@ def get_survey_answers(survey_id):
             "message": "Survey not found"
         }), 404
 
-    # Vérifier que le chercheur possède cette enquête
+    # Admin -> accès à tout
+    # Researcher -> uniquement ses enquêtes
 
-    if survey.researcher_id != researcher_id:
+    if role == "researcher":
+
+        if survey.researcher_id != user_id:
+            return jsonify({
+                "message": "You cannot access this survey"
+            }), 403
+
+    elif role != "admin":
 
         return jsonify({
-            "message": "You cannot access this survey"
-        }),403
+            "message": "Access denied"
+        }), 403
 
     answers = Answer.query.join(
         Question
@@ -227,14 +237,40 @@ def get_survey_answers(survey_id):
     result = []
 
     for answer in answers:
-
         result.append({
 
             "answer_id": answer.id,
+
             "question_id": answer.question_id,
-            "respondent_id": answer.user_id,
-            "value": answer.value,
-            "created_at": answer.created_at
+
+            "question": answer.question.title,
+
+            "question_type": answer.question.type,
+
+            "respondent_id": answer.user.id,
+
+            "respondent_name":
+                f"{answer.user.firstname} {answer.user.lastname}",
+
+            "respondent_email":
+                answer.user.email,
+
+            "gender":
+                answer.user.gender,
+
+            "age":
+                answer.user.age,
+
+            "value":
+                answer.value,
+
+            "multiple_choices": [
+                option.option_value
+                for option in answer.options
+            ],
+
+            "created_at":
+                answer.created_at
 
         })
 
