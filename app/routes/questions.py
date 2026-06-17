@@ -1,3 +1,5 @@
+# app/routes/questions.py
+
 from flask import Blueprint, jsonify, request
 from flasgger import swag_from
 
@@ -142,3 +144,4 @@ def delete_question(question_id):
     db.session.commit()
 
     return jsonify({"message": "Question deleted successfully"}), 200
+
