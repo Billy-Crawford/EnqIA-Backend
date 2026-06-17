@@ -6,7 +6,7 @@ from flask_jwt_extended import (
 )
 
 from app.decorators.roles import (
-    researcher_required
+    researcher_required, respondent_required
 )
 
 from app.models.survey import Survey
@@ -142,5 +142,42 @@ def admin_dashboard():
 
     }),200
 
+
+@dashboard_bp.route(
+    "/respondent",
+    methods=["GET"]
+)
+@respondent_required()
+def respondent_dashboard():
+
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    available_surveys = Survey.query.filter(
+        Survey.is_published == True,
+        Survey.archived_at.is_(None)
+    ).count()
+
+    answers_count = Answer.query.filter_by(
+        user_id=user_id
+    ).count()
+
+    participations = len({
+        answer.question.survey_id
+        for answer in Answer.query.filter_by(
+            user_id=user_id
+        ).all()
+    })
+
+    return jsonify({
+
+        "available_surveys": available_surveys,
+
+        "answers": answers_count,
+
+        "participations": participations
+
+    }), 200
 
 
