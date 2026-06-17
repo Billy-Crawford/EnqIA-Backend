@@ -160,13 +160,45 @@ def profile():
 
     user_id = get_jwt_identity()
 
-    claims =get_jwt()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"message": "User not found"}), 404
 
     return jsonify({
-        "user_id": user_id,
-        "email": claims.get("email"),
-        "role": claims.get("role")
+        "id": user.id,
+        "firstname": user.firstname,
+        "lastname": user.lastname,
+        "email": user.email,
+        "role": user.role,
+        "gender": user.gender,
+        "age": user.age
     }), 200
+
+
+@auth_bp.route("/profile", methods=["PUT"])
+@jwt_required()
+def update_profile():
+
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    data = request.get_json()
+
+    user.firstname = data.get("firstname", user.firstname)
+    user.lastname = data.get("lastname", user.lastname)
+    user.gender = data.get("gender", user.gender)
+    user.age = data.get("age", user.age)
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Profile updated successfully"
+    }), 200
+
 
 @auth_bp.route("/admin-test", methods=["GET"])
 @admin_required()
